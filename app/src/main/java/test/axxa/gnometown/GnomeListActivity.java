@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -13,6 +14,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
@@ -35,28 +37,32 @@ public class GnomeListActivity extends Activity {
     private static final String TAG = "GnomeListActivity";
     public static final TownManager tm = new TownManager();
     public ArrayList<Gnome> population = new ArrayList<Gnome>();
+    public ArrayList<Gnome> population_raw = new ArrayList<Gnome>();
+    static GnomeListActivity ga;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Context context = this;
-        DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder().cacheOnDisk(true).delayBeforeLoading(1).showImageOnLoading(R.drawable.light_blue_material_design_loading).build();
-        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(getApplicationContext()).defaultDisplayImageOptions(defaultOptions).build();
-        ImageLoader.getInstance().init(config); // Do it on Application start
-
-        try {
-            new AsyncGnomeFetcher(GnomeListActivity.this).execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         setContentView(R.layout.activity_gnome_list);
-
+        ga = this;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         Context context = this;
+        DisplayImageOptions defaultOptions = new DisplayImageOptions.Builder().cacheOnDisk(true).delayBeforeLoading(1).showImageOnLoading(R.drawable.light_blue_material_design_loading).build();
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(getApplicationContext()).defaultDisplayImageOptions(defaultOptions).build();
+        ImageLoader.getInstance().init(config); // Do it on Application start
+
+        try {
+            if(population.isEmpty()){
+                new AsyncGnomeFetcher(GnomeListActivity.this).execute();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -130,18 +136,21 @@ public class GnomeListActivity extends Activity {
                 InputStream is = new ByteArrayInputStream( result.getBytes("UTF-8") );
                 tm.readPopulation(is);
                 population = (ArrayList<Gnome>) tm.town.getPopulation();
+                population_raw = (ArrayList<Gnome>) tm.town.getPopulation();
+                savePopulationToShared(population);
                 final GnomeAdapter adapter = new GnomeAdapter(context, (ArrayList<Gnome>)population);
-                ListView listView = (ListView) findViewById(R.id.gnome_list);
-                listView.setAdapter(adapter);
-                listView.setTextFilterEnabled(true);
 
-                EditText inputSearch = (EditText) findViewById(R.id.search_bar);
+                final ListView listView_filtered = (ListView) findViewById(R.id.gnome_filtered_list);
+                listView_filtered.setAdapter(adapter);
 
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                final EditText inputSearch = (EditText) findViewById(R.id.search_bar);
+                Button searchButton  = (Button) findViewById(R.id.searchButton);
+
+                listView_filtered.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> adapter, View view, int position, long arg) {
                         Gnome currentGnome = new Gnome();
-                        currentGnome = tm.town.getPopulation().get(position);
+                        currentGnome = population.get(position);
                         Intent appInfo = new Intent(context, GnomeProfile.class);
                         System.out.println(currentGnome.getName());
                         appInfo.putExtra("Gnome",currentGnome);
@@ -149,23 +158,23 @@ public class GnomeListActivity extends Activity {
                     }
                 });
 
-                inputSearch.addTextChangedListener(new TextWatcher() {
+                searchButton.setOnClickListener(new View.OnClickListener() {
 
                     @Override
-                    public void onTextChanged(CharSequence cs, int arg1, int arg2, int arg3) {
-                        // When user changed the Text
-                        adapter.getFilter().filter(cs);
+                    public void onClick(View v) {
+                        CharSequence cs = inputSearch.getText();
+                        if(!inputSearch.getText().toString().matches("")){
+                            adapter.getFilter().filter(cs);
+                            adapter.notifyDataSetChanged();
+                        }
+                        else{
+                            adapter.clear();
+                            adapter.addAll(getPopulationFromShared());
+                            adapter.notifyDataSetChanged();
+                        }
                     }
 
-                    @Override
-                    public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) { }
-
-                    @Override
-                    public void afterTextChanged(Editable arg0) {}
                 });
-
-
-
             }catch(UnsupportedEncodingException e ){
                 e.printStackTrace();
             }catch(IOException ei){
@@ -182,5 +191,33 @@ public class GnomeListActivity extends Activity {
     public void reloadActivity(){
         finish();
         startActivity(getIntent());
+    }
+
+    public void savePopulationToShared(ArrayList<Gnome> population){
+        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        try {
+            editor.putString("population", ObjectSerializer.serialize(population));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        editor.commit();
+    }
+
+    public ArrayList<Gnome> getPopulationFromShared(){
+        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
+        ArrayList<Gnome> population = new ArrayList<Gnome>();
+        try {
+            population = (ArrayList<Gnome>) ObjectSerializer.deserialize(prefs.getString("population", ObjectSerializer.serialize(new ArrayList<Gnome>())));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return population;
+    }
+
+    public static GnomeListActivity getInstance(){
+        return   ga;
     }
 }
