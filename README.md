@@ -8,7 +8,8 @@ The application has been tested in Android Studio latest version (3.00) - you ca
 
 ## Built With
 
-- Java (1.8)
+- Java
+- https://github.com/hdodenhof/CircleImageView
 
 ## Authors
 
