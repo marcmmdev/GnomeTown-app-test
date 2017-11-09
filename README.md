@@ -15,7 +15,13 @@ There isn't any test implemented yet.
 ## Built With
 
 - Java
+
+## Libraries
+
 - https://github.com/hdodenhof/CircleImageView
+  - CircleImageView is a library that provides an easy way of creating a circular ImageView component. 
+- https://github.com/nostra13/Android-Universal-Image-Loader
+  - Android-Universal-Image-Loader is a library that grants the possibility of loading up the images and embed them in the ImageView component in a fast and reliable way.
 
 ## Authors
 
