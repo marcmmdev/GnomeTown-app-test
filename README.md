@@ -8,7 +8,9 @@ The application has been tested in Android Studio latest version (3.00) - you ca
 
 ## Running the tests
 
-There is any test implemented yet. 
+There isn't any test implemented yet. 
+
+- There should be, at least, an unitary test on the JSON fetch to check if the method is capable of managing all the data coming from the server, which is, essentially, the core of the app.
 
 ## Built With
 
