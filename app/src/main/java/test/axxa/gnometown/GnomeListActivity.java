@@ -32,7 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class GnomeListActivity extefnds Activity {
+public class GnomeListActivity extends Activity {
 
     private static final String TAG = "GnomeListActivity";
     public static final TownManager tm = new TownManager();
