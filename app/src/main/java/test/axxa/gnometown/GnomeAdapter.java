@@ -104,58 +104,13 @@ public class GnomeAdapter extends ArrayAdapter<Gnome> implements Filterable {
             filteredData = (ArrayList<Gnome>)results.values;
             notifyDataSetChanged();
             clear();
-            if(filteredData != null){
-                int count = filteredData.size();
-                for(int i = 0; i<count; i++){
-                    add(filteredData.get(i));
-                    notifyDataSetInvalidated();
-                }
-            }else{
-
+            int count = filteredData.size();
+            for(int i = 0; i<count; i++){
+                add(filteredData.get(i));
+                notifyDataSetInvalidated();
             }
         }
     }
-
-   /* private class GnomeFilter extends Filter {
-        @Override
-        protected FilterResults performFiltering(CharSequence constraint) {
-            FilterResults results = new FilterResults();
-            // We implement here the filter logic
-            if (constraint == null || constraint.length() == 0) {
-                // No filter implemented we return all the list
-                results.values = gnomes;
-                results.count = gnomes.size();
-            }
-            else {
-                // We perform filtering operation
-                List<Gnome> nGnomesList = new ArrayList<Gnome>();
-
-                for (Gnome g : gnomes) {
-                    if (g.getName().toUpperCase()
-                            .startsWith(constraint.toString().toUpperCase()))
-                        nGnomesList.add(g);
-                }
-
-                results.values = nGnomesList;
-                results.count = nGnomesList.size();
-            }
-            return results;
-        }
-
-        @Override
-        protected void publishResults(CharSequence constraint,
-                                      FilterResults results) {
-
-            // Now we have to inform the adapter about the new list filtered
-            if (results.count == 0)
-                notifyDataSetInvalidated();
-            else {
-                gnomes = (ArrayList<Gnome>) results.values;
-                notifyDataSetChanged();
-            }
-        }
-    }*/
-
 
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;

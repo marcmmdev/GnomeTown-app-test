@@ -32,7 +32,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class GnomeListActivity extends Activity {
+public class GnomeListActivity extefnds Activity {
 
     private static final String TAG = "GnomeListActivity";
     public static final TownManager tm = new TownManager();
@@ -64,8 +64,6 @@ public class GnomeListActivity extends Activity {
             e.printStackTrace();
         }
     }
-
-
 
     /*Async task manager*/
     class AsyncGnomeFetcher extends AsyncTask<String, String, Void> {
@@ -135,9 +133,12 @@ public class GnomeListActivity extends Activity {
                 Log.e("X","RESULT: " + result);
                 InputStream is = new ByteArrayInputStream( result.getBytes("UTF-8") );
                 tm.readPopulation(is);
+
                 population = (ArrayList<Gnome>) tm.town.getPopulation();
-                population_raw = (ArrayList<Gnome>) tm.town.getPopulation();
-                savePopulationToShared(population);
+                for(int i=0;i<population.size();i++){
+                    population_raw.add(population.get(i));
+                }
+
                 final GnomeAdapter adapter = new GnomeAdapter(context, (ArrayList<Gnome>)population);
 
                 final ListView listView_filtered = (ListView) findViewById(R.id.gnome_filtered_list);
@@ -162,16 +163,22 @@ public class GnomeListActivity extends Activity {
 
                     @Override
                     public void onClick(View v) {
-                        CharSequence cs = inputSearch.getText();
-                        if(!inputSearch.getText().toString().matches("")){
-                            adapter.getFilter().filter(cs);
-                            adapter.notifyDataSetChanged();
-                        }
-                        else{
-                            adapter.clear();
-                            adapter.addAll(getPopulationFromShared());
-                            adapter.notifyDataSetChanged();
-                        }
+                    CharSequence cs = inputSearch.getText();
+                    if(!inputSearch.getText().toString().matches("")){
+                        adapter.clear();
+                        adapter.addAll(population_raw);
+                        adapter.notifyDataSetChanged();
+                        //Cleaning the adapter so we populate it again with raw data (letting it to filter every gnome again)
+                        adapter.getFilter().filter(cs);
+                        adapter.notifyDataSetChanged();
+
+                    }
+                    else{
+                        //Repopulating the adapter if the filter is empty
+                        adapter.clear();
+                        adapter.addAll(population_raw);
+                        adapter.notifyDataSetChanged();
+                    }
                     }
 
                 });
@@ -186,35 +193,6 @@ public class GnomeListActivity extends Activity {
     public void showProfile(){
         Intent intent = new Intent(this, GnomeProfile.class);
         startActivity(intent);
-    }
-
-    public void reloadActivity(){
-        finish();
-        startActivity(getIntent());
-    }
-
-    public void savePopulationToShared(ArrayList<Gnome> population){
-        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        try {
-            editor.putString("population", ObjectSerializer.serialize(population));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        editor.commit();
-    }
-
-    public ArrayList<Gnome> getPopulationFromShared(){
-        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
-        ArrayList<Gnome> population = new ArrayList<Gnome>();
-        try {
-            population = (ArrayList<Gnome>) ObjectSerializer.deserialize(prefs.getString("population", ObjectSerializer.serialize(new ArrayList<Gnome>())));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return population;
     }
 
     public static GnomeListActivity getInstance(){
